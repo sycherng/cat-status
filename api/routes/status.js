@@ -2,9 +2,10 @@ const mongoose = require('mongoose');
 const express = require('express');
 const Router = express.Router();
 
-const Status = require('../routes/status'); 
-const activities = require('../resources/activities');
-const utils = require('../resources/utils');
+const Bio = require('../models/bio');
+const Status = require('../models/status'); 
+const activities = require('../../resources/activities');
+const utils = require('../../resources/utils');
 
 Router.get('/', (req, res, next) => {
   res.status(200).json({
@@ -13,32 +14,45 @@ Router.get('/', (req, res, next) => {
 });
 
 Router.get('/:cat_name', (req, res, next) => {
-  const cat_name = req.params.cat_name;
-  Status
-  .findOne({ name: cat_name })
-  .exec()
+  const cat_name = req.params.cat_name; 
+  var cat_id;
+
+  //load the cat bio
+  Bio.findOne({'name': cat_name}).exec()
+
+  //using cat id load the status
+  .then(cat_doc => {
+    if (cat_doc == null) {
+      res.status(404).json({
+        message: `No cat by the name of ${cat_name}.`
+      })
+    };
+    cat_id = cat_doc._id;
+    return Status.findOne({'_id': cat_id}).exec();
+  })
+
+  //check if activity has expired
   .then(cat_status => {
-    if (cat_status == null) {
-    res.status(404).json({
-      message: `No cat by the name of ${cat_name}!`
-    });
+    console.log(cat_status);
+    var activity;
+    //if activity expired, roll a new activity and update the doc
+    if (cat_status.expiry < Date.now()) {
+      const new_activity = utils.getNewActivity(cat_status.activity);
+      const new_expiry = utils.getNewExpiry(new_activity);
+      Status.update({'_id': cat_id}, {'activity': new_activity.name, 'expiry': new_expiry }).exec();
+      activity = new_activity.name;
     } else {
-    // if activity expired
-    // roll a new activity, update the doc
-    if (cat_status.expiry < Date.now) {
-      const new_activity = utils.getNewActivity(old);
-      const new_expiry = utils.getNewExpiry(activity);
-      Status.update({ name: cat_name }, { activity: new_activity, expiry: new_expiry });
+      activity = cat_status.activity;
     }
-    // return the activity
+//    activity = 'meowing';
     res.status(200).json({
-      'status': cat_status.activity
-    });
-    }
-  });
+        message: `${cat_name} is currently ${activity}.`
+    })
+  })
+
   .catch(err => {
-    res.status(500).json({
-    error:err
-    });
+    next(err);
   });
 });
+  
+module.exports = Router;

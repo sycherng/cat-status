@@ -7,7 +7,7 @@ const bio_schema = mongoose.Schema({
   color: String,
   life_stage: String,
   sex: String,
-  size: String
+  size: String,
   personality: String
 });
 

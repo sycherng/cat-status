@@ -6,7 +6,7 @@ class Activity {
   }
 }
 
-const activities = [
+const activity_array = [
   new Activity('soliciting pats and food from neighbours', 3*60, 6*60), 
   new Activity('unrolling toilet paper', 3, 5),
   new Activity('playing with toys', 3, 15),
@@ -18,4 +18,4 @@ const activities = [
   new Activity('cat-napping', 1*60, 3*60)
 ]
 
-module.export = activities;
+module.exports = activity_array;
